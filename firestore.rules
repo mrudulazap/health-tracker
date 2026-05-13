@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Single-owner personal app. PIN gates the UI; anonymous auth gates the data layer.
+    // Any signed-in user (including anonymous) can read/write — risk is mitigated by
+    // the project ID being unguessable and the app being for personal use only.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
