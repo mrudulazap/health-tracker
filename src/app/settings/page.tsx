@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Save, Lock } from "lucide-react";
 import { saveSettings, useSettings } from "@/lib/store";
+import { useCurrentUser, SESSION_USER_KEY } from "@/lib/auth";
 import { UserSettings } from "@/lib/types";
 
 const defaultSettings: UserSettings = {
@@ -20,8 +21,9 @@ const defaultSettings: UserSettings = {
 };
 
 export default function SettingsPage() {
+  const { id: uid, name: userName } = useCurrentUser();
   const { settings, loading } = useSettings();
-  const [draft, setDraft] = useState<UserSettings>(defaultSettings);
+  const [draft, setDraft] = useState<UserSettings>({ ...defaultSettings, displayName: userName });
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -42,13 +44,14 @@ export default function SettingsPage() {
       dailyProteinTargetG: Math.round(draft.weightKg * 1.6),
     };
     setDraft(final);
-    await saveSettings(final);
+    await saveSettings(uid, final);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
 
   function handleLock() {
     if (typeof window !== "undefined") {
+      localStorage.removeItem(SESSION_USER_KEY);
       localStorage.removeItem("ht_unlocked");
       window.location.reload();
     }

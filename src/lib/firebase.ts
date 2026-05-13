@@ -26,8 +26,3 @@ if (typeof window !== "undefined" && hasConfig) {
 export const auth = _auth as Auth;
 export const db = _db as Firestore;
 export const firebaseReady = hasConfig;
-// NEXT_PUBLIC_ALLOWED_EMAIL is no longer used (PIN gate replaced email allowlist).
-
-// All data lives under this single document path. Anonymous auth gates writes
-// at the Firestore-rules level; the PIN gates the UI client-side.
-export const OWNER_ID = "owner";

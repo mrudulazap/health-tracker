@@ -5,12 +5,15 @@ import { QuickLog } from "@/components/QuickLog";
 import { DaySummary } from "@/components/DaySummary";
 import { DateScroller } from "@/components/DateScroller";
 import { useSettings } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
 import { todayKey } from "@/lib/dates";
 
 export default function TodayPage() {
+  const user = useCurrentUser();
   const { settings } = useSettings();
   const [date, setDate] = useState(todayKey());
-  const firstName = settings?.displayName?.split(" ")[0] ?? "you";
+  const firstName =
+    settings?.displayName?.split(" ")[0] ?? user.name.split(" ")[0];
 
   return (
     <div className="space-y-4">

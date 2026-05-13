@@ -2,6 +2,7 @@
 
 import { Trash2, Flame, Activity } from "lucide-react";
 import { deleteMeal, deleteWorkout, summarize, useMeals, useWorkouts, useSettings } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
 import { MealSlot } from "@/lib/types";
 
 const slotLabels: Record<MealSlot, { label: string; emoji: string }> = {
@@ -12,6 +13,7 @@ const slotLabels: Record<MealSlot, { label: string; emoji: string }> = {
 };
 
 export function DaySummary({ date }: { date: string }) {
+  const { id: uid } = useCurrentUser();
   const { meals } = useMeals(date);
   const { workouts } = useWorkouts(date);
   const { settings } = useSettings();
@@ -126,7 +128,7 @@ export function DaySummary({ date }: { date: string }) {
                   trailing={`${m.totalKcal}`}
                   trailingUnit="kcal"
                   trailingColor="text-rose-600"
-                  onDelete={() => deleteMeal(m.id)}
+                  onDelete={() => deleteMeal(uid, m.id)}
                 />
               );
             })}
@@ -147,7 +149,7 @@ export function DaySummary({ date }: { date: string }) {
                 trailing={`-${w.kcalBurned}`}
                 trailingUnit="kcal"
                 trailingColor="text-emerald-600"
-                onDelete={() => deleteWorkout(w.id)}
+                onDelete={() => deleteWorkout(uid, w.id)}
               />
             ))}
         </Section>

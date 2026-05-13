@@ -13,7 +13,8 @@ import {
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db, OWNER_ID } from "./firebase";
+import { auth, db } from "./firebase";
+import { useCurrentUser } from "./auth";
 import {
   MealEntry,
   WorkoutEntry,
@@ -22,117 +23,121 @@ import {
   DailySummary,
 } from "./types";
 
-const userDoc = () => doc(db, "users", OWNER_ID);
-const mealsCol = () => collection(db, "users", OWNER_ID, "meals");
-const workoutsCol = () => collection(db, "users", OWNER_ID, "workouts");
-const cycleCol = () => collection(db, "users", OWNER_ID, "cycle");
+const userDoc = (uid: string) => doc(db, "users", uid);
+const mealsCol = (uid: string) => collection(db, "users", uid, "meals");
+const workoutsCol = (uid: string) => collection(db, "users", uid, "workouts");
+const cycleCol = (uid: string) => collection(db, "users", uid, "cycle");
 
-function useAuthReady() {
+function useFbAuthReady() {
   const [user] = useAuthState(auth);
   return !!user;
 }
 
 export function useMeals(date?: string) {
-  const ready = useAuthReady();
+  const ready = useFbAuthReady();
+  const { id: uid } = useCurrentUser();
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!ready) return;
     const q = date
-      ? query(mealsCol(), where("date", "==", date))
-      : query(mealsCol(), orderBy("date", "desc"));
+      ? query(mealsCol(uid), where("date", "==", date))
+      : query(mealsCol(uid), orderBy("date", "desc"));
     const unsub = onSnapshot(q, (snap) => {
       setMeals(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<MealEntry, "id">) })));
       setLoading(false);
     });
     return () => unsub();
-  }, [ready, date]);
+  }, [ready, date, uid]);
 
   return { meals, loading };
 }
 
 export function useWorkouts(date?: string) {
-  const ready = useAuthReady();
+  const ready = useFbAuthReady();
+  const { id: uid } = useCurrentUser();
   const [workouts, setWorkouts] = useState<WorkoutEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!ready) return;
     const q = date
-      ? query(workoutsCol(), where("date", "==", date))
-      : query(workoutsCol(), orderBy("date", "desc"));
+      ? query(workoutsCol(uid), where("date", "==", date))
+      : query(workoutsCol(uid), orderBy("date", "desc"));
     const unsub = onSnapshot(q, (snap) => {
       setWorkouts(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<WorkoutEntry, "id">) })));
       setLoading(false);
     });
     return () => unsub();
-  }, [ready, date]);
+  }, [ready, date, uid]);
 
   return { workouts, loading };
 }
 
 export function useCycle() {
-  const ready = useAuthReady();
+  const ready = useFbAuthReady();
+  const { id: uid } = useCurrentUser();
   const [entries, setEntries] = useState<CycleEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!ready) return;
-    const q = query(cycleCol(), orderBy("date", "desc"));
+    const q = query(cycleCol(uid), orderBy("date", "desc"));
     const unsub = onSnapshot(q, (snap) => {
       setEntries(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<CycleEntry, "id">) })));
       setLoading(false);
     });
     return () => unsub();
-  }, [ready]);
+  }, [ready, uid]);
 
   return { entries, loading };
 }
 
 export function useSettings() {
-  const ready = useAuthReady();
+  const ready = useFbAuthReady();
+  const { id: uid } = useCurrentUser();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!ready) return;
-    const unsub = onSnapshot(userDoc(), (snap) => {
+    const unsub = onSnapshot(userDoc(uid), (snap) => {
       setSettings(snap.exists() ? (snap.data() as UserSettings) : null);
       setLoading(false);
     });
     return () => unsub();
-  }, [ready]);
+  }, [ready, uid]);
 
   return { settings, loading };
 }
 
-export async function saveSettings(settings: UserSettings) {
-  await setDoc(userDoc(), settings, { merge: true });
+export async function saveSettings(uid: string, settings: UserSettings) {
+  await setDoc(userDoc(uid), settings, { merge: true });
 }
 
-export async function addMeal(meal: Omit<MealEntry, "id">) {
-  await addDoc(mealsCol(), { ...meal, createdAt: Date.now() });
+export async function addMeal(uid: string, meal: Omit<MealEntry, "id">) {
+  await addDoc(mealsCol(uid), { ...meal, createdAt: Date.now() });
 }
 
-export async function deleteMeal(id: string) {
-  await deleteDoc(doc(db, "users", OWNER_ID, "meals", id));
+export async function deleteMeal(uid: string, id: string) {
+  await deleteDoc(doc(db, "users", uid, "meals", id));
 }
 
-export async function addWorkout(workout: Omit<WorkoutEntry, "id">) {
-  await addDoc(workoutsCol(), { ...workout, createdAt: Date.now() });
+export async function addWorkout(uid: string, workout: Omit<WorkoutEntry, "id">) {
+  await addDoc(workoutsCol(uid), { ...workout, createdAt: Date.now() });
 }
 
-export async function deleteWorkout(id: string) {
-  await deleteDoc(doc(db, "users", OWNER_ID, "workouts", id));
+export async function deleteWorkout(uid: string, id: string) {
+  await deleteDoc(doc(db, "users", uid, "workouts", id));
 }
 
-export async function addCycleEntry(entry: Omit<CycleEntry, "id">) {
-  await addDoc(cycleCol(), { ...entry, createdAt: Date.now() });
+export async function addCycleEntry(uid: string, entry: Omit<CycleEntry, "id">) {
+  await addDoc(cycleCol(uid), { ...entry, createdAt: Date.now() });
 }
 
-export async function deleteCycleEntry(id: string) {
-  await deleteDoc(doc(db, "users", OWNER_ID, "cycle", id));
+export async function deleteCycleEntry(uid: string, id: string) {
+  await deleteDoc(doc(db, "users", uid, "cycle", id));
 }
 
 export function summarize(meals: MealEntry[], workouts: WorkoutEntry[], date: string): DailySummary {

@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameDay, differenceInDays } from "date-fns";
 import { ChevronLeft, ChevronRight, Droplet, Trash2 } from "lucide-react";
 import { addCycleEntry, deleteCycleEntry, useCycle, useSettings } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
 import { dateKey } from "@/lib/dates";
 import { predictCycle } from "@/lib/cycle";
 import { CycleFlow, CycleSymptom } from "@/lib/types";
@@ -199,6 +200,7 @@ function DayEntryForm({
   date: Date;
   entry?: ReturnType<typeof useCycle>["entries"][number];
 }) {
+  const { id: uid } = useCurrentUser();
   const [flow, setFlow] = useState<CycleFlow | null>(entry?.flow ?? null);
   const [selectedSymptoms, setSelectedSymptoms] = useState<CycleSymptom[]>(entry?.symptoms ?? []);
   const [isPeriodStart, setIsPeriodStart] = useState(entry?.isPeriodStart ?? false);
@@ -213,8 +215,8 @@ function DayEntryForm({
   }, [entry, date]);
 
   async function save() {
-    if (entry) await deleteCycleEntry(entry.id);
-    await addCycleEntry({
+    if (entry) await deleteCycleEntry(uid, entry.id);
+    await addCycleEntry(uid, {
       date: dateKey(date),
       isPeriodStart,
       isPeriodEnd,
@@ -237,7 +239,7 @@ function DayEntryForm({
         {entry && (
           <button
             onClick={async () => {
-              if (entry) await deleteCycleEntry(entry.id);
+              if (entry) await deleteCycleEntry(uid, entry.id);
             }}
             className="rounded p-1 text-stone-400 hover:bg-red-50 hover:text-red-500"
           >

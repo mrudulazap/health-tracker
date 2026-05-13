@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Sparkles, UtensilsCrossed, Dumbbell, Loader2 } from "lucide-react";
 import { addMeal, addWorkout } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
 import { kcalBurned } from "@/lib/met";
 import { MealSlot, WorkoutKind, FoodItem, UserSettings } from "@/lib/types";
 
@@ -22,6 +23,7 @@ export function QuickLog({
   settings: UserSettings | null;
   date: string;
 }) {
+  const { id: uid } = useCurrentUser();
   const [mode, setMode] = useState<Mode>("meal");
   const [slot, setSlot] = useState<MealSlot>("lunch");
   const [input, setInput] = useState("");
@@ -57,7 +59,7 @@ export function QuickLog({
           { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
         );
 
-        await addMeal({
+        await addMeal(uid, {
           date,
           slot,
           rawInput: trimmed,
@@ -82,7 +84,7 @@ export function QuickLog({
         if (!data.activities?.length) throw new Error("No activities detected");
         const weight = settings?.weightKg ?? 60;
         for (const a of data.activities) {
-          await addWorkout({
+          await addWorkout(uid, {
             date,
             kind: a.kind,
             description: a.description,
