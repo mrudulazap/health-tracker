@@ -1,9 +1,12 @@
 "use client";
 
-import { Trash2, Flame, Activity } from "lucide-react";
+import { useState } from "react";
+import { Trash2, Flame, Activity, Pencil } from "lucide-react";
 import { deleteMeal, deleteWorkout, summarize, useMeals, useWorkouts, useSettings } from "@/lib/store";
 import { useCurrentUser } from "@/lib/auth";
-import { MealSlot } from "@/lib/types";
+import { MealEntry, MealSlot, WorkoutEntry } from "@/lib/types";
+import { EditMealModal } from "./EditMealModal";
+import { EditWorkoutModal } from "./EditWorkoutModal";
 
 const slotLabels: Record<MealSlot, { label: string; emoji: string }> = {
   breakfast: { label: "Breakfast", emoji: "🌅" },
@@ -21,11 +24,13 @@ export function DaySummary({ date }: { date: string }) {
   const target = settings?.dailyKcalTarget ?? 2000;
   const proteinTarget = settings?.dailyProteinTargetG ?? 80;
 
+  const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null);
+  const [editingWorkout, setEditingWorkout] = useState<WorkoutEntry | null>(null);
+
   const ringPct = Math.min(100, Math.round((summary.kcalIn / target) * 100));
   const remaining = Math.max(0, target - summary.net);
   const over = summary.net > target;
 
-  // SVG ring math
   const radius = 70;
   const stroke = 14;
   const c = 2 * Math.PI * radius;
@@ -33,7 +38,6 @@ export function DaySummary({ date }: { date: string }) {
 
   return (
     <div className="space-y-4">
-      {/* Big calorie ring */}
       <div className="relative overflow-hidden rounded-3xl border-2 border-stone-900/10 bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 p-6 shadow-[0_8px_0_-2px_rgba(0,0,0,0.08)]">
         <div className="flex items-center gap-6">
           <div className="relative">
@@ -103,7 +107,6 @@ export function DaySummary({ date }: { date: string }) {
           </div>
         </div>
 
-        {/* Macros bar */}
         <div className="mt-4 grid grid-cols-4 gap-2">
           <Macro label="Protein" value={summary.proteinG} unit="g" target={proteinTarget} color="bg-purple-500" />
           <Macro label="Carbs" value={summary.carbsG} unit="g" color="bg-amber-500" />
@@ -112,7 +115,6 @@ export function DaySummary({ date }: { date: string }) {
         </div>
       </div>
 
-      {/* Meals */}
       {meals.length > 0 && (
         <Section title="Meals" emoji="🍴">
           {meals
@@ -128,6 +130,7 @@ export function DaySummary({ date }: { date: string }) {
                   trailing={`${m.totalKcal}`}
                   trailingUnit="kcal"
                   trailingColor="text-rose-600"
+                  onEdit={() => setEditingMeal(m)}
                   onDelete={() => deleteMeal(uid, m.id)}
                 />
               );
@@ -135,7 +138,6 @@ export function DaySummary({ date }: { date: string }) {
         </Section>
       )}
 
-      {/* Workouts */}
       {workouts.length > 0 && (
         <Section title="Workouts" emoji="💪">
           {workouts
@@ -149,6 +151,7 @@ export function DaySummary({ date }: { date: string }) {
                 trailing={`-${w.kcalBurned}`}
                 trailingUnit="kcal"
                 trailingColor="text-emerald-600"
+                onEdit={() => setEditingWorkout(w)}
                 onDelete={() => deleteWorkout(uid, w.id)}
               />
             ))}
@@ -163,6 +166,13 @@ export function DaySummary({ date }: { date: string }) {
             Type a meal or workout above to get started
           </p>
         </div>
+      )}
+
+      {editingMeal && (
+        <EditMealModal meal={editingMeal} onClose={() => setEditingMeal(null)} />
+      )}
+      {editingWorkout && (
+        <EditWorkoutModal workout={editingWorkout} onClose={() => setEditingWorkout(null)} />
       )}
     </div>
   );
@@ -244,6 +254,7 @@ function Row({
   trailing,
   trailingUnit,
   trailingColor,
+  onEdit,
   onDelete,
 }: {
   emoji: string;
@@ -252,6 +263,7 @@ function Row({
   trailing: string;
   trailingUnit: string;
   trailingColor: string;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -267,13 +279,22 @@ function Row({
         <div className={`text-base font-bold ${trailingColor}`}>{trailing}</div>
         <div className="text-[10px] font-medium text-stone-400">{trailingUnit}</div>
       </div>
-      <button
-        onClick={onDelete}
-        className="rounded-lg p-2 text-stone-300 transition hover:bg-red-50 hover:text-red-500 group-hover:text-stone-500"
-        aria-label="Delete"
-      >
-        <Trash2 size={14} />
-      </button>
+      <div className="flex flex-col gap-1 sm:flex-row">
+        <button
+          onClick={onEdit}
+          className="rounded-lg p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
+          aria-label="Edit"
+        >
+          <Pencil size={14} />
+        </button>
+        <button
+          onClick={onDelete}
+          className="rounded-lg p-2 text-stone-400 transition hover:bg-red-50 hover:text-red-500"
+          aria-label="Delete"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
     </div>
   );
 }

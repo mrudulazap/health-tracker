@@ -120,12 +120,20 @@ export async function addMeal(uid: string, meal: Omit<MealEntry, "id">) {
   await addDoc(mealsCol(uid), { ...meal, createdAt: Date.now() });
 }
 
+export async function updateMeal(uid: string, id: string, updates: Partial<Omit<MealEntry, "id">>) {
+  await setDoc(doc(db, "users", uid, "meals", id), updates, { merge: true });
+}
+
 export async function deleteMeal(uid: string, id: string) {
   await deleteDoc(doc(db, "users", uid, "meals", id));
 }
 
 export async function addWorkout(uid: string, workout: Omit<WorkoutEntry, "id">) {
   await addDoc(workoutsCol(uid), { ...workout, createdAt: Date.now() });
+}
+
+export async function updateWorkout(uid: string, id: string, updates: Partial<Omit<WorkoutEntry, "id">>) {
+  await setDoc(doc(db, "users", uid, "workouts", id), updates, { merge: true });
 }
 
 export async function deleteWorkout(uid: string, id: string) {

@@ -26,11 +26,13 @@ export function useCurrentUser(): CurrentUser {
 }
 
 // Reserved PINs that can't be claimed by new users
-export const RESERVED_PINS = new Set(["1106", "0000"]);
+export const RESERVED_PINS = new Set(["1106", "0000", "2308", "1709"]);
 
-// Hardcoded mapping: PIN 1106 → mk
+// Hardcoded PIN → user mapping. Other PINs get looked up in /pins/{pin}
 export const HARDCODED_USERS: Record<string, CurrentUser> = {
   "1106": { id: "mk", name: "Mrudula" },
+  "2308": { id: "himaja", name: "Himaja" },
+  "1709": { id: "durgesh", name: "Durgesh" },
 };
 
 // localStorage keys
