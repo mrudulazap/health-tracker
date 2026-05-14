@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { Save, Lock } from "lucide-react";
 import { saveSettings, useSettings } from "@/lib/store";
-import { useCurrentUser, SESSION_USER_KEY } from "@/lib/auth";
+import { useViewingUser, SESSION_USER_KEY } from "@/lib/auth";
 import { UserSettings } from "@/lib/types";
+import { UserSwitcher, ReadOnlyBanner } from "@/components/UserSwitcher";
 
 const defaultSettings: UserSettings = {
   displayName: "Mrudula",
@@ -21,7 +22,9 @@ const defaultSettings: UserSettings = {
 };
 
 export default function SettingsPage() {
-  const { id: uid, name: userName } = useCurrentUser();
+  const { viewing, isReadOnly } = useViewingUser();
+  const uid = viewing.id;
+  const userName = viewing.name;
   const { settings, loading } = useSettings();
   const [draft, setDraft] = useState<UserSettings>({ ...defaultSettings, displayName: userName });
   const [saved, setSaved] = useState(false);
@@ -59,12 +62,19 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <header className="pt-2">
-        <h1 className="text-3xl font-extrabold tracking-tight text-stone-900">
-          Settings <span className="inline-block">⚙️</span>
-        </h1>
-        <p className="mt-1 text-sm font-medium text-stone-500">Profile & goals</p>
+      <header className="flex items-start justify-between gap-3 pt-2">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-stone-900">
+            Settings <span className="inline-block">⚙️</span>
+          </h1>
+          <p className="mt-1 text-sm font-medium text-stone-500">
+            {isReadOnly ? `${userName}'s profile (read-only)` : "Profile & goals"}
+          </p>
+        </div>
+        <UserSwitcher />
       </header>
+
+      <ReadOnlyBanner />
 
       <Section title="Profile">
         <Field label="Display name">
@@ -163,10 +173,11 @@ export default function SettingsPage() {
 
       <button
         onClick={handleSave}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-rose-500 to-orange-500 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-rose-500/30 transition active:scale-[0.98]"
+        disabled={isReadOnly}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-rose-500 to-orange-500 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-rose-500/30 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Save size={16} />
-        {saved ? "✨ Saved!" : "Save settings"}
+        {isReadOnly ? "View-only mode" : saved ? "✨ Saved!" : "Save settings"}
       </button>
 
       <button

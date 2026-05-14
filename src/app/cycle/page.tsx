@@ -4,7 +4,8 @@ import { useState, useMemo } from "react";
 import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameDay, differenceInDays } from "date-fns";
 import { ChevronLeft, ChevronRight, Droplet, Trash2 } from "lucide-react";
 import { addCycleEntry, deleteCycleEntry, useCycle, useSettings } from "@/lib/store";
-import { useCurrentUser } from "@/lib/auth";
+import { useViewingUser } from "@/lib/auth";
+import { UserSwitcher, ReadOnlyBanner } from "@/components/UserSwitcher";
 import { dateKey } from "@/lib/dates";
 import { predictCycle } from "@/lib/cycle";
 import { CycleFlow, CycleSymptom } from "@/lib/types";
@@ -65,14 +66,19 @@ export default function CyclePage() {
 
   return (
     <div className="space-y-6">
-      <header className="pt-2">
-        <h1 className="text-3xl font-extrabold tracking-tight text-stone-900">
-          Cycle <span className="inline-block">🌸</span>
-        </h1>
-        <p className="mt-1 text-sm font-medium text-stone-500">
-          Period tracking & predictions
-        </p>
+      <header className="flex items-start justify-between gap-3 pt-2">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-stone-900">
+            Cycle <span className="inline-block">🌸</span>
+          </h1>
+          <p className="mt-1 text-sm font-medium text-stone-500">
+            Period tracking & predictions
+          </p>
+        </div>
+        <UserSwitcher />
       </header>
+
+      <ReadOnlyBanner />
 
       <div className="grid grid-cols-2 gap-3">
         <PredictCard
@@ -200,7 +206,8 @@ function DayEntryForm({
   date: Date;
   entry?: ReturnType<typeof useCycle>["entries"][number];
 }) {
-  const { id: uid } = useCurrentUser();
+  const { viewing, isReadOnly } = useViewingUser();
+  const uid = viewing.id;
   const [flow, setFlow] = useState<CycleFlow | null>(entry?.flow ?? null);
   const [selectedSymptoms, setSelectedSymptoms] = useState<CycleSymptom[]>(entry?.symptoms ?? []);
   const [isPeriodStart, setIsPeriodStart] = useState(entry?.isPeriodStart ?? false);
@@ -310,9 +317,10 @@ function DayEntryForm({
 
       <button
         onClick={save}
-        className="w-full rounded-lg bg-stone-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-stone-800"
+        disabled={isReadOnly}
+        className="w-full rounded-lg bg-stone-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        Save entry
+        {isReadOnly ? "View-only mode" : "Save entry"}
       </button>
     </div>
   );

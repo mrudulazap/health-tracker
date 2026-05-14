@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Trash2, Flame, Activity, Pencil } from "lucide-react";
 import { deleteMeal, deleteWorkout, summarize, useMeals, useWorkouts, useSettings } from "@/lib/store";
-import { useCurrentUser } from "@/lib/auth";
+import { useViewingUser } from "@/lib/auth";
 import { MealEntry, MealSlot, WorkoutEntry } from "@/lib/types";
 import { EditMealModal } from "./EditMealModal";
 import { EditWorkoutModal } from "./EditWorkoutModal";
@@ -16,7 +16,8 @@ const slotLabels: Record<MealSlot, { label: string; emoji: string }> = {
 };
 
 export function DaySummary({ date }: { date: string }) {
-  const { id: uid } = useCurrentUser();
+  const { viewing, isReadOnly } = useViewingUser();
+  const uid = viewing.id;
   const { meals } = useMeals(date);
   const { workouts } = useWorkouts(date);
   const { settings } = useSettings();
@@ -130,8 +131,8 @@ export function DaySummary({ date }: { date: string }) {
                   trailing={`${m.totalKcal}`}
                   trailingUnit="kcal"
                   trailingColor="text-rose-600"
-                  onEdit={() => setEditingMeal(m)}
-                  onDelete={() => deleteMeal(uid, m.id)}
+                  onEdit={isReadOnly ? undefined : () => setEditingMeal(m)}
+                  onDelete={isReadOnly ? undefined : () => deleteMeal(uid, m.id)}
                 />
               );
             })}
@@ -151,8 +152,8 @@ export function DaySummary({ date }: { date: string }) {
                 trailing={`-${w.kcalBurned}`}
                 trailingUnit="kcal"
                 trailingColor="text-emerald-600"
-                onEdit={() => setEditingWorkout(w)}
-                onDelete={() => deleteWorkout(uid, w.id)}
+                onEdit={isReadOnly ? undefined : () => setEditingWorkout(w)}
+                onDelete={isReadOnly ? undefined : () => deleteWorkout(uid, w.id)}
               />
             ))}
         </Section>
@@ -263,8 +264,8 @@ function Row({
   trailing: string;
   trailingUnit: string;
   trailingColor: string;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }) {
   return (
     <div className="group flex items-center gap-3 px-4 py-3">
@@ -279,22 +280,28 @@ function Row({
         <div className={`text-base font-bold ${trailingColor}`}>{trailing}</div>
         <div className="text-[10px] font-medium text-stone-400">{trailingUnit}</div>
       </div>
-      <div className="flex flex-col gap-1 sm:flex-row">
-        <button
-          onClick={onEdit}
-          className="rounded-lg p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
-          aria-label="Edit"
-        >
-          <Pencil size={14} />
-        </button>
-        <button
-          onClick={onDelete}
-          className="rounded-lg p-2 text-stone-400 transition hover:bg-red-50 hover:text-red-500"
-          aria-label="Delete"
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
+      {(onEdit || onDelete) && (
+        <div className="flex flex-col gap-1 sm:flex-row">
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="rounded-lg p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
+              aria-label="Edit"
+            >
+              <Pencil size={14} />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="rounded-lg p-2 text-stone-400 transition hover:bg-red-50 hover:text-red-500"
+              aria-label="Delete"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

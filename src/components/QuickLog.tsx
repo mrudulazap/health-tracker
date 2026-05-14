@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Sparkles, UtensilsCrossed, Dumbbell, Loader2 } from "lucide-react";
 import { addMeal, addWorkout } from "@/lib/store";
-import { useCurrentUser } from "@/lib/auth";
+import { useViewingUser } from "@/lib/auth";
 import { kcalBurned } from "@/lib/met";
 import { MealSlot, WorkoutKind, FoodItem, UserSettings } from "@/lib/types";
 
@@ -23,7 +23,8 @@ export function QuickLog({
   settings: UserSettings | null;
   date: string;
 }) {
-  const { id: uid } = useCurrentUser();
+  const { viewing, isReadOnly } = useViewingUser();
+  const uid = viewing.id;
   const [mode, setMode] = useState<Mode>("meal");
   const [slot, setSlot] = useState<MealSlot>("lunch");
   const [input, setInput] = useState("");
@@ -108,6 +109,20 @@ export function QuickLog({
     mode === "meal"
       ? "from-rose-500 to-orange-500"
       : "from-emerald-500 to-teal-500";
+
+  if (isReadOnly) {
+    return (
+      <div className="rounded-3xl border-2 border-dashed border-stone-300 bg-white/50 p-6 text-center">
+        <div className="mb-1 text-2xl">👁️</div>
+        <p className="text-sm font-semibold text-stone-700">
+          View-only mode
+        </p>
+        <p className="mt-1 text-xs text-stone-500">
+          You can&apos;t log meals for other users
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-3xl border-2 border-stone-900/10 bg-white shadow-[0_8px_0_-2px_rgba(0,0,0,0.08)]">

@@ -14,7 +14,7 @@ import {
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "./firebase";
-import { useCurrentUser } from "./auth";
+import { useViewingUser } from "./auth";
 import {
   MealEntry,
   WorkoutEntry,
@@ -35,7 +35,8 @@ function useFbAuthReady() {
 
 export function useMeals(date?: string) {
   const ready = useFbAuthReady();
-  const { id: uid } = useCurrentUser();
+  const { viewing } = useViewingUser();
+  const uid = viewing.id;
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,7 +57,8 @@ export function useMeals(date?: string) {
 
 export function useWorkouts(date?: string) {
   const ready = useFbAuthReady();
-  const { id: uid } = useCurrentUser();
+  const { viewing } = useViewingUser();
+  const uid = viewing.id;
   const [workouts, setWorkouts] = useState<WorkoutEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,7 +79,8 @@ export function useWorkouts(date?: string) {
 
 export function useCycle() {
   const ready = useFbAuthReady();
-  const { id: uid } = useCurrentUser();
+  const { viewing } = useViewingUser();
+  const uid = viewing.id;
   const [entries, setEntries] = useState<CycleEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -96,7 +99,8 @@ export function useCycle() {
 
 export function useSettings() {
   const ready = useFbAuthReady();
-  const { id: uid } = useCurrentUser();
+  const { viewing } = useViewingUser();
+  const uid = viewing.id;
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
